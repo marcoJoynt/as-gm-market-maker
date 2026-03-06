@@ -13,7 +13,7 @@ The A-S model solves for a market maker's optimal quotes accounting for two comp
 
 The result is a closed-form solution for bid/ask quotes that balances these two forces optimally at every point in the trading session.
 
-I read through the paper properly before building this — notes on the derivations are [here](https://www.notion.so/bunchcapital/AVELLANEDA-STOIKOV-31aa8bd6cafd80289780fd97f61dab9d).
+**My personal notes on the paper** (derivations, intuition, and implementation details) are [here](https://remarkable-mandevilla-1be.notion.site/Avellaneda-Stoikov-High-frequency-trading-in-a-limit-order-book-31bc59be727d80e1914cd4e8b59db29f?source=copy_link). I read through the paper properly before building this simulator.
 
 ---
 
@@ -113,3 +113,4 @@ The model is straightforward to implement but the parameter interactions are non
 ## References
 
 - Avellaneda, M. & Stoikov, S. (2008). *High-frequency trading in a limit order book.* Quantitative Finance, 8(3), 217–224.
+- [My notes on the paper](https://remarkable-mandevilla-1be.notion.site/Avellaneda-Stoikov-High-frequency-trading-in-a-limit-order-book-31bc59be727d80e1914cd4e8b59db29f?source=copy_link) (Notion) — derivations, intuition, implementation.
