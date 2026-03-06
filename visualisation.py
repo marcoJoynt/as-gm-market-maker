@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 
 def plot_simulation(log):
@@ -10,45 +11,49 @@ def plot_simulation(log):
     inventory = [r["inventory"] for r in log]
     pnl = [r["pnl"] for r in log]
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-    fig.suptitle("Avellaneda-Stoikov Market Making Simulation")
+    fig = plt.figure(figsize=(12, 9))
+    gs = GridSpec(3, 2, figure=fig, height_ratios=[1, 1, 1], hspace=0.35)
 
-    # mid price vs bid/ask
-    ax = axes[0, 0]
-    ax.plot(steps, S, label="mid", color="black", linewidth=1)
-    ax.plot(steps, bid, label="bid", color="green", linewidth=0.8, linestyle="--")
-    ax.plot(steps, ask, label="ask", color="red", linewidth=0.8, linestyle="--")
-    ax.set_title("Mid Price vs Quotes")
-    ax.set_xlabel("step")
-    ax.set_ylabel("price")
-    ax.legend()
+    # Top: mid price vs quotes (full width)
+    ax_price = fig.add_subplot(gs[0, :])
+    ax_price.fill_between(steps, bid, ask, color="gray", alpha=0.12)
+    ax_price.plot(steps, S, label="mid", color="black", linewidth=1)
+    ax_price.plot(steps, bid, label="bid", color="green", linewidth=0.8, linestyle="--")
+    ax_price.plot(steps, ask, label="ask", color="red", linewidth=0.8, linestyle="--")
+    ax_price.set_title("Mid Price vs Quotes")
+    ax_price.set_ylabel("price")
+    ax_price.set_xlabel("step")
+    ax_price.legend()
+    ax_price.grid(True, alpha=0.3)
 
-    # inventory
-    ax = axes[0, 1]
-    ax.plot(steps, inventory, color="steelblue", linewidth=1)
-    ax.axhline(0, color="black", linewidth=0.5, linestyle="--")
-    ax.set_title("Inventory")
-    ax.set_xlabel("step")
-    ax.set_ylabel("units")
+    # Middle: inventory (full width, shared x with price)
+    ax_inv = fig.add_subplot(gs[1, :], sharex=ax_price)
+    ax_inv.plot(steps, inventory, color="steelblue", linewidth=1)
+    ax_inv.axhline(0, color="black", linewidth=0.5, linestyle="--")
+    ax_inv.set_title("Inventory")
+    ax_inv.set_ylabel("units")
+    ax_inv.set_xlabel("step")
+    ax_inv.grid(True, alpha=0.3)
 
-    # cumulative pnl
-    ax = axes[1, 0]
-    ax.plot(steps, pnl, color="darkorange", linewidth=1)
-    ax.axhline(0, color="black", linewidth=0.5, linestyle="--")
-    ax.set_title("Mark-to-Market P&L")
-    ax.set_xlabel("step")
-    ax.set_ylabel("pnl")
+    # Bottom: spread and P&L side by side
+    ax_spread = fig.add_subplot(gs[2, 0], sharex=ax_inv)
+    ax_spread.plot(steps, spread, color="purple", linewidth=1)
+    ax_spread.set_title("Spread Width")
+    ax_spread.set_xlabel("step")
+    ax_spread.set_ylabel("spread")
+    ax_spread.grid(True, alpha=0.3)
+    spread_vals = [r["spread"] for r in log]
+    ax_spread.set_ylim(min(spread_vals) * 0.995, max(spread_vals) * 1.005)
 
-    # spread over time
-    ax = axes[1, 1]
-    ax.plot(steps, spread, color="purple", linewidth=1)
-    ax.set_title("Spread Width")
-    ax.set_xlabel("step")
-    ax.set_ylabel("spread")
-    ## Set y-axis limits to fit the spread values (for better visualization)
-    spreads = [r["spread"] for r in log]
-    ax.set_ylim(min(spreads) * 0.995, max(spreads) * 1.005)
+    ax_pnl = fig.add_subplot(gs[2, 1], sharex=ax_inv)
+    ax_pnl.plot(steps, pnl, color="darkorange", linewidth=1)
+    ax_pnl.axhline(0, color="black", linewidth=0.5, linestyle="--")
+    ax_pnl.set_title("Mark-to-Market P&L")
+    ax_pnl.set_xlabel("step")
+    ax_pnl.set_ylabel("pnl")
+    ax_pnl.grid(True, alpha=0.3)
 
+    fig.suptitle("Avellaneda–Stoikov Market Making Simulation", y=1.02)
     plt.tight_layout()
-    plt.savefig("simulation.png", dpi=150)
+    plt.savefig("simulation.png", dpi=150, bbox_inches="tight")
     plt.show()
