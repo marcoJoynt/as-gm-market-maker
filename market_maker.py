@@ -2,7 +2,7 @@ import numpy as np
 from config import GAMMA, SIGMA, KAPPA
 
 
-def reservation_price(s, inventory, time_remaining)
+def reservation_price(s, inventory, time_remaining):
     """
     Adjust mid price for inventory risk.
     The more inventory we hold, the more we skew our quotes
@@ -12,7 +12,7 @@ def reservation_price(s, inventory, time_remaining)
     r = S - q * gamma * sigma^2 * (T - t)
     ## s.t. q->0, r -> S
     """
-    return S - inventory * GAMMA * SIGMA**2 * time_remaining
+    return s - inventory * GAMMA * SIGMA**2 * time_remaining
 
 
 def optimal_spread(time_remaining):
