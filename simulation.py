@@ -15,10 +15,10 @@ def simulate_orders(bid, ask, S, inventory, cash):
     goes down exponentially the further price is from mid.
     """
     # probability of someone hitting our ask (they're buying from us)
-    prob_ask_hit = A * np.exp(-KAPPA * (ask - S))
+    prob_ask_hit = A * dT * np.exp(-KAPPA * (ask - S))
     
     # probability of someone hitting our bid (they're selling to us)
-    prob_bid_hit = A * np.exp(-KAPPA * (S - bid))
+    prob_bid_hit = A * dT * np.exp(-KAPPA * (S - bid))
 
     # ask hit → we sell to them → inventory decreases, cash increases
     if np.random.uniform() < prob_ask_hit:

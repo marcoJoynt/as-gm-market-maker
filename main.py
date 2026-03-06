@@ -1,6 +1,7 @@
 from config import N_STEPS, dT, T, S0, INITIAL_CASH, INITIAL_INVENTORY
 from simulation import update_price, simulate_orders
 from market_maker import get_quotes
+from visualisation import plot_simulation
 
 
 def run_simulation():
@@ -13,7 +14,7 @@ def run_simulation():
     for step in range(N_STEPS):
         S = update_price(S)
 
-        time_remaining = T - step * DT
+        time_remaining = T - step * dT
 
         bid, ask = get_quotes(S, inventory, time_remaining)
 
