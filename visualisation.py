@@ -3,16 +3,16 @@ import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
 
 
-def plot_simulation(log):
-    steps      = [r["step"]      for r in log]
-    S          = [r["S"]         for r in log]
-    V          = [r["V"]         for r in log]
-    bid        = [r["bid"]       for r in log]
-    ask        = [r["ask"]       for r in log]
-    spread     = [r["spread"]    for r in log]
-    inventory  = [r["inventory"] for r in log]
-    pnl        = [r["pnl"]       for r in log]
-    regime     = [r["regime"]    for r in log]
+def plot_simulation(df):
+    steps      = df["step"]
+    S          = df["S"]
+    V          = df["V"]
+    bid        = df["bid"]
+    ask        = df["ask"]
+    spread     = df["spread"]
+    inventory  = df["inventory"]
+    pnl        = df["pnl"]
+    regime     = df["regime"]
 
     # Build toxic period spans for shading
     toxic_spans = []
@@ -21,12 +21,12 @@ def plot_simulation(log):
     for i, reg in enumerate(regime):
         if reg == "toxic" and not in_toxic:
             in_toxic = True
-            start = steps[i]
+            start = steps.iloc[i]
         elif reg == "normal" and in_toxic:
             in_toxic = False
-            toxic_spans.append((start, steps[i]))
+            toxic_spans.append((start, steps.iloc[i]))
     if in_toxic:
-        toxic_spans.append((start, steps[-1]))
+        toxic_spans.append((start, steps.iloc[-1]))
 
     def shade_toxic(ax):
         for (x0, x1) in toxic_spans:
@@ -61,7 +61,7 @@ def plot_simulation(log):
 
     # ── Row 2: regime indicator (full width) ──
     ax_regime = fig.add_subplot(gs[2, :], sharex=ax_price)
-    regime_binary = [1 if r == "toxic" else 0 for r in regime]
+    regime_binary = (regime == "toxic").astype(int)
     ax_regime.fill_between(steps, regime_binary, color="red", alpha=0.4, step="post")
     ax_regime.set_yticks([0, 1])
     ax_regime.set_yticklabels(["normal", "toxic"], fontsize=8)
@@ -77,7 +77,7 @@ def plot_simulation(log):
     ax_spread.set_xlabel("step")
     ax_spread.set_ylabel("spread")
     ax_spread.grid(True, alpha=0.3)
-    ax_spread.set_ylim(min(spread) * 0.995, max(spread) * 1.005)
+    ax_spread.set_ylim(spread.min() * 0.995, spread.max() * 1.005)
 
     ax_pnl = fig.add_subplot(gs[3, 1], sharex=ax_price)
     shade_toxic(ax_pnl)
