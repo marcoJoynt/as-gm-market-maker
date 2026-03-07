@@ -6,6 +6,8 @@ from matplotlib.gridspec import GridSpec
 import seaborn as sns
 import streamlit as st
 
+# Simulation lives in main.py (single source of truth); we pass sidebar params into
+# run_simulation() and only pull N_STEPS from config for metrics (e.g. Sharpe).
 sns.set_theme(
     style="dark",
     rc={
@@ -107,6 +109,8 @@ with st.sidebar:
     run = st.button("▶  Run Simulation")
 
 # ── Summary metrics ───────────────────────────────────────────────────────────
+# Uses N_STEPS from config for Sharpe scaling; df comes from main.run_simulation() and
+# includes trade_pnl (spread capture per trade, logged in main).
 def compute_metrics(df):
     pnl_returns     = df["pnl"].diff().dropna()
     sharpe          = (pnl_returns.mean() / pnl_returns.std() * np.sqrt(N_STEPS)
@@ -225,8 +229,10 @@ def _style_seaborn_ax(ax):
 def make_seaborn_panels(df):
     """Return two figures: spread capture (trade P&L) by regime, and inventory violin by regime."""
     # Figure 1 — Spread capture per trade by regime
-    # trade_pnl = ask - S on sells, S - bid on buys (0 if no trade). Shows what MM earned per trade;
-    # adverse selection: informed flow → negative/near-zero, noise → cluster near half-spread.
+    # We plot trade_pnl (ask - S on sells, S - bid on buys), not cash.diff(), because
+    # cash moves by full notional (~100) every trade; trade_pnl is order-of-spread and
+    # separates adverse selection: informed flow → worse/near-zero, noise → cluster near half-spread.
+    # Filter to steps where a trade occurred so the KDE is over realised spread capture only.
     df_trades = df[df["trade_pnl"] != 0][["trade_pnl", "regime"]].copy()
 
     fig1, ax1 = plt.subplots(figsize=(14, 4), facecolor=CHART_BG)
@@ -246,6 +252,7 @@ def make_seaborn_panels(df):
     plt.tight_layout()
 
     # Figure 2 — Inventory distribution by regime
+    # Toxic: more directional (peaked); normal: wider, mean-reverting. No filtering by trade.
     fig2, ax2 = plt.subplots(figsize=(14, 4), facecolor=CHART_BG)
     sns.violinplot(
         data=df,
@@ -263,6 +270,8 @@ def make_seaborn_panels(df):
 
 
 # ── Main layout ───────────────────────────────────────────────────────────────
+# When "Run Simulation" is clicked we call main.run_simulation() with sidebar params;
+# main uses config for anything not overridden (e.g. PROB_TOXIC_TO_NORMAL, INFORMED_PROB_NORMAL).
 st.markdown("# AS-GM Market Making Simulator")
 st.markdown("<p style='color:#8b949e; font-family:monospace; margin-top:-12px;'>Avellaneda–Stoikov quoting under Glosten–Milgrom adverse selection</p>", unsafe_allow_html=True)
 st.markdown("---")
@@ -295,6 +304,7 @@ if run:
     col2.pyplot(fig2, use_container_width=True)
 
 else:
+    # No run yet: show prompt to set params and click Run Simulation.
     st.markdown("""
     <div style='text-align:center; padding: 80px 0; color:#8b949e; font-family:monospace;'>
         <div style='font-size:48px; margin-bottom:16px;'>⟳</div>
