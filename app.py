@@ -3,10 +3,25 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
+import seaborn as sns
 import streamlit as st
 
-from market_maker import get_quotes
-from simulation import update_price, simulate_orders
+sns.set_theme(
+    style="dark",
+    rc={
+        "axes.facecolor": "#161b22",
+        "figure.facecolor": "#0e1117",
+        "axes.edgecolor": "#30363d",
+        "grid.color": "#21262d",
+        "text.color": "#e6edf3",
+        "axes.labelcolor": "#8b949e",
+        "xtick.color": "#8b949e",
+        "ytick.color": "#8b949e",
+    },
+)
+
+from main import run_simulation
+from config import N_STEPS
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -90,80 +105,6 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("▶  Run Simulation")
-
-# ── Fixed config ──────────────────────────────────────────────────────────────
-S0                  = 100.0
-T                   = 1.0
-N_STEPS             = 10_000
-DT                  = T / N_STEPS
-KAPPA               = 10.0
-A                   = 1.0 * N_STEPS
-TRADE_SIZE          = 1
-INITIAL_CASH        = 0.0
-INITIAL_INVENTORY   = 0
-INFORMED_PROB_NORMAL = 0.05
-PROB_TOXIC_TO_NORMAL = 0.05
-SIGNAL_NOISE        = 0.02
-
-# ── Simulation ────────────────────────────────────────────────────────────────
-def run_simulation(sigma, gamma, kyle_lambda, informed_prob_toxic, prob_normal_to_toxic):
-    S         = S0
-    V         = S0
-    cash      = INITIAL_CASH
-    inventory = INITIAL_INVENTORY
-    regime    = "normal"
-    log       = []
-
-    for step in range(N_STEPS):
-        # Regime transition
-        p_switch = PROB_TOXIC_TO_NORMAL if regime == "toxic" else prob_normal_to_toxic
-        if np.random.uniform() < p_switch:
-            regime = "toxic" if regime == "normal" else "normal"
-
-        # Price update — same dW for S and V
-        dW = np.random.normal()
-        S  = S + sigma * np.sqrt(DT) * dW
-        V  = V + sigma * np.sqrt(DT) * dW
-
-        # Quotes
-        time_remaining = T - step * DT
-        bid, ask = get_quotes(S, inventory, time_remaining, gamma=gamma)
-
-        # Orders
-        informed_prob = informed_prob_toxic if regime == "toxic" else INFORMED_PROB_NORMAL
-        is_informed   = np.random.uniform() < informed_prob
-        buy = sell    = False
-
-        if is_informed:
-            signal = V + SIGNAL_NOISE * np.random.normal()
-            if signal > ask:
-                inventory -= TRADE_SIZE; cash += ask * TRADE_SIZE; sell = True
-            elif signal < bid:
-                inventory += TRADE_SIZE; cash -= bid * TRADE_SIZE; buy = True
-        else:
-            from config import KAPPA as K, A as AA
-            prob_ask_hit = AA * DT * np.exp(-K * (ask - S))
-            prob_bid_hit = AA * DT * np.exp(-K * (S - bid))
-            if np.random.uniform() < prob_ask_hit:
-                inventory -= TRADE_SIZE; cash += ask * TRADE_SIZE; sell = True
-            if np.random.uniform() < prob_bid_hit:
-                inventory += TRADE_SIZE; cash -= bid * TRADE_SIZE; buy = True
-
-        # Kyle's lambda
-        if is_informed and sell:
-            S += kyle_lambda * TRADE_SIZE
-        elif is_informed and buy:
-            S -= kyle_lambda * TRADE_SIZE
-
-        pnl = cash + inventory * S
-        log.append({
-            "step": step, "S": S, "V": V,
-            "bid": bid, "ask": ask, "spread": ask - bid,
-            "inventory": inventory, "cash": cash, "pnl": pnl,
-            "regime": regime, "informed": is_informed,
-        })
-
-    return pd.DataFrame(log)
 
 # ── Summary metrics ───────────────────────────────────────────────────────────
 def compute_metrics(df):
@@ -269,6 +210,58 @@ def make_figure(df):
     plt.tight_layout()
     return fig
 
+
+def _style_seaborn_ax(ax):
+    ax.set_facecolor(PANEL_BG)
+    ax.grid(True, color=GRID_COLOR, linewidth=0.5)
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#30363d")
+    ax.tick_params(colors=TEXT_COLOR, labelsize=8)
+    ax.xaxis.label.set_color(TEXT_COLOR)
+    ax.yaxis.label.set_color(TEXT_COLOR)
+    ax.title.set_color("#e6edf3")
+
+
+def make_seaborn_panels(df):
+    """Return two figures: spread capture (trade P&L) by regime, and inventory violin by regime."""
+    # Figure 1 — Spread capture per trade by regime
+    # trade_pnl = ask - S on sells, S - bid on buys (0 if no trade). Shows what MM earned per trade;
+    # adverse selection: informed flow → negative/near-zero, noise → cluster near half-spread.
+    df_trades = df[df["trade_pnl"] != 0][["trade_pnl", "regime"]].copy()
+
+    fig1, ax1 = plt.subplots(figsize=(14, 4), facecolor=CHART_BG)
+    sns.kdeplot(
+        data=df_trades,
+        x="trade_pnl",
+        hue="regime",
+        palette={"normal": "#388bfd", "toxic": "#f85149"},
+        fill=True,
+        alpha=0.3,
+        linewidth=1.5,
+        ax=ax1,
+    )
+    ax1.axvline(0, color="#8b949e")
+    ax1.set_title("Spread Capture per Trade — Normal vs Toxic Regime")
+    _style_seaborn_ax(ax1)
+    plt.tight_layout()
+
+    # Figure 2 — Inventory distribution by regime
+    fig2, ax2 = plt.subplots(figsize=(14, 4), facecolor=CHART_BG)
+    sns.violinplot(
+        data=df,
+        x="regime",
+        y="inventory",
+        palette={"normal": "#388bfd", "toxic": "#f85149"},
+        inner="quart",
+        ax=ax2,
+    )
+    ax2.set_title("Inventory Distribution by Regime")
+    _style_seaborn_ax(ax2)
+    plt.tight_layout()
+
+    return fig1, fig2
+
+
 # ── Main layout ───────────────────────────────────────────────────────────────
 st.markdown("# AS-GM Market Making Simulator")
 st.markdown("<p style='color:#8b949e; font-family:monospace; margin-top:-12px;'>Avellaneda–Stoikov quoting under Glosten–Milgrom adverse selection</p>", unsafe_allow_html=True)
@@ -295,6 +288,11 @@ if run:
 
     st.markdown("###")
     st.pyplot(make_figure(df), use_container_width=True)
+    st.markdown("###")
+    fig1, fig2 = make_seaborn_panels(df)
+    col1, col2 = st.columns(2)
+    col1.pyplot(fig1, use_container_width=True)
+    col2.pyplot(fig2, use_container_width=True)
 
 else:
     st.markdown("""
