@@ -24,4 +24,15 @@ TRADE_SIZE = 1 # Trade size (Shares per trade, non-fractional)
 INITIAL_CASH = 0.0
 INITIAL_INVENTORY = 0
 
+# Adverse selection params
+## S and V stay close by design; adverse selection shows up in inventory and P&L during toxic regimes, not in a large S−V gap.
+## Learnings: symmetric transition prob made toxic ~50% of the time (stationary dist). Asymmetric: rare entry into toxic, quick exit so it feels like a stress event.
+## Learnings: Kyle's lambda is too low, and V, S is indistinguishable on graph, increasing KYLE_LAMBDA from 0.05 to 0.1.
+INFORMED_PROB_NORMAL = 0.05     # prob of informed trader in normal regime
+INFORMED_PROB_TOXIC = 0.30      # prob of informed trader in toxic regime
+PROB_NORMAL_TO_TOXIC = 0.005   # prob each step of switching normal → toxic (rare)
+PROB_TOXIC_TO_NORMAL = 0.05    # prob each step of switching toxic → normal (quick exit)
+SIGNAL_NOISE = 0.02             # std of noise on informed trader's signal
+KYLE_LAMBDA = 0.1              # price impact per unit traded (Kyle's lambda)
+
 
