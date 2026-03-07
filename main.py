@@ -1,5 +1,6 @@
 import numpy as np
-from config import N_STEPS, dT, T, S0, INITIAL_CASH, INITIAL_INVENTORY, PROB_NORMAL_TO_TOXIC, PROB_TOXIC_TO_NORMAL, KYLE_LAMBDA, TRADE_SIZE
+import pandas as pd
+from config import N_STEPS, DT, T, S0, INITIAL_CASH, INITIAL_INVENTORY, PROB_NORMAL_TO_TOXIC, PROB_TOXIC_TO_NORMAL, KYLE_LAMBDA, TRADE_SIZE
 from simulation import update_price, simulate_orders
 from market_maker import get_quotes
 from visualisation import plot_simulation
@@ -24,7 +25,7 @@ def run_simulation():
         S, V = update_price(S, V)
 
         # 3. Quotes
-        time_remaining = T - step * dT
+        time_remaining = T - step * DT
         bid, ask = get_quotes(S, inventory, time_remaining)
 
         # 4. Simulate orders
@@ -54,11 +55,10 @@ def run_simulation():
             "informed": result["informed"],
         })
 
-    return log
+    return pd.DataFrame(log)
 
 
 if __name__ == "__main__":
-    import visualisation
 
-    log = run_simulation()
-    visualisation.plot_simulation(log)
+    df = run_simulation()
+    plot_simulation(df)

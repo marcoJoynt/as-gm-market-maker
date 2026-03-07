@@ -1,5 +1,5 @@
 import numpy as np
-from config import SIGMA, dT, KAPPA, A, TRADE_SIZE,INFORMED_PROB_NORMAL, INFORMED_PROB_TOXIC, SIGNAL_NOISE
+from config import SIGMA, DT, KAPPA, A, TRADE_SIZE,INFORMED_PROB_NORMAL, INFORMED_PROB_TOXIC, SIGNAL_NOISE
 
 def update_price(S,V):
     """
@@ -7,8 +7,8 @@ def update_price(S,V):
     dS = sigma * sqrt(dt) * dW
     """
     dW = np.random.normal()
-    S = S + SIGMA * np.sqrt(dT) * dW
-    V = V + SIGMA * np.sqrt(dT) * dW
+    S = S + SIGMA * np.sqrt(DT) * dW
+    V = V + SIGMA * np.sqrt(DT) * dW
     return S, V
 
 def simulate_orders(bid, ask, S,V, inventory, cash, regime):
@@ -39,9 +39,9 @@ def simulate_orders(bid, ask, S,V, inventory, cash, regime):
 
     else:
         # probability of someone hitting our ask (they're buying from us)
-        prob_ask_hit = A * dT * np.exp(-KAPPA * (ask - S))
+        prob_ask_hit = A * DT * np.exp(-KAPPA * (ask - S))
         # probability of someone hitting our bid (they're selling to us)
-        prob_bid_hit = A * dT * np.exp(-KAPPA * (S - bid))
+        prob_bid_hit = A * DT * np.exp(-KAPPA * (S - bid))
 
     # ask hit → we sell to them → inventory decreases, cash increases
         if np.random.uniform() < prob_ask_hit:

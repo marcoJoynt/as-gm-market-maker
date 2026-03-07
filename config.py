@@ -5,7 +5,7 @@
 S0 = 100.0  # Initial asset price, arbitrary amount and currency
 T = 1 # one trading session (e.g. 6.5hr day, normalised to 1)
 N_STEPS= 10000 # Number of total timesteps to simulate
-dT = T/N_STEPS # time / timestep
+DT = T/N_STEPS # time / timestep
 
 ### Market Params ###
 
