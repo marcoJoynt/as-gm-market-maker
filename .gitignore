@@ -214,7 +214,7 @@ __marimo__/
 # Streamlit — secrets live here; never commit API keys
 .streamlit/secrets.toml
 
-# Generated outputs (narrow so you can still commit e.g. docs/screenshot.png)
+# Generated outputs (can still commit e.g. docs/screenshot.png)
 simulation.png
 output/
 
