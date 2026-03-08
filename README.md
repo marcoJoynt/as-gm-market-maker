@@ -185,15 +185,6 @@ Summary metrics displayed: Final P&L, Spread Capture Ratio (mean/std of per-trad
 
 ---
 
-## What's next
-
-- **Regime-aware quoting** — widen spread or skew more aggressively in toxic regimes (requires a regime signal or proxy, e.g. recent fill imbalance).
-- **Gamma experiment** — run multiple simulations with different GAMMA overlaid (spread width, inventory bounds, P&L comparison).
-- **Proper calibration** — fit σ, κ, A and GM params to real tick data (e.g. from a public L2 feed).
-- **Stoikov extension** — add the infinite-horizon ω parameter to enforce a hard inventory cap.
-
----
-
 ## References
 
 - Avellaneda, M. & Stoikov, S. (2008). *High-frequency trading in a limit order book.* Quantitative Finance, 8(3), 217–224.
