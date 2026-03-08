@@ -2,6 +2,8 @@
 
 A Python simulation of the Avellaneda–Stoikov (2008) market making model, extended with a Glosten–Milgrom style adverse-selection layer and an interactive Streamlit dashboard. Built to understand optimal quoting and how it degrades under informed flow.
 
+**Live demo:** [app](https://as-gm-market-maker-production.up.railway.app)
+
 ---
 
 ## Quick Start
