@@ -75,7 +75,8 @@ def run_simulation(
 
         pnl = cash + inventory * S
         # Additive: captures both legs if uninformed flow hits bid and ask in the same step.
-        trade_pnl = (ask - S_at_trade if result["sell"] else 0.0) + (S_at_trade - bid if result["buy"] else 0.0)
+        fills = int(result["sell"]) + int(result["buy"])
+        trade_pnl = ((ask - S_at_trade if result["sell"] else 0.0) + (S_at_trade - bid if result["buy"] else 0.0))/ fills if fills > 0 else 0.0
         log.append({
             "step": step,
             "S": S,

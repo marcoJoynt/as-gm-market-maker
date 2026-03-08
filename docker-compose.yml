@@ -1,0 +1,7 @@
+services:
+  asgm-sim:
+    build: .
+    container_name: asgm-sim
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
