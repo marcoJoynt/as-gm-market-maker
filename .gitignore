@@ -205,3 +205,24 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# -----------------------------------------------------------------------------
+# Project-specific (Streamlit, Railway, env, outputs)
+# -----------------------------------------------------------------------------
+# .env, .envrc — already in Environments above
+
+# Streamlit — secrets live here; never commit API keys
+.streamlit/secrets.toml
+
+# Generated outputs (narrow so you can still commit e.g. docs/screenshot.png)
+simulation.png
+output/
+
+# Exported/generated data
+*.csv
+
+# Railway
+.railway/
+
+# macOS
+.DS_Store
