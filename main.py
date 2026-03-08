@@ -74,7 +74,8 @@ def run_simulation(
             S -= kyle_lambda * TRADE_SIZE
 
         pnl = cash + inventory * S
-        trade_pnl = (ask - S_at_trade) if result["sell"] else (S_at_trade - bid) if result["buy"] else 0.0
+        # Additive: captures both legs if uninformed flow hits bid and ask in the same step.
+        trade_pnl = (ask - S_at_trade if result["sell"] else 0.0) + (S_at_trade - bid if result["buy"] else 0.0)
         log.append({
             "step": step,
             "S": S,
