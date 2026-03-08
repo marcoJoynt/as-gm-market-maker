@@ -55,7 +55,7 @@ def run_simulation(
 
         # 3. Quotes
         time_remaining = T - step * DT
-        bid, ask = get_quotes(S, inventory, time_remaining, gamma=gamma)
+        bid, ask = get_quotes(S, inventory, time_remaining, gamma=gamma, sigma=sigma)
 
         # 4. Simulate orders
         result = simulate_orders(

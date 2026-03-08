@@ -2,7 +2,7 @@ import numpy as np
 from config import GAMMA, SIGMA, KAPPA
 
 
-def reservation_price(s, inventory, time_remaining, gamma=None):
+def reservation_price(s, inventory, time_remaining, gamma=None, sigma=None):
     """
     Adjust mid price for inventory risk.
     The more inventory we hold, the more we skew our quotes
@@ -13,10 +13,11 @@ def reservation_price(s, inventory, time_remaining, gamma=None):
     ## s.t. q->0, r -> S
     """
     g = gamma if gamma is not None else GAMMA
-    return s - inventory * g * SIGMA**2 * time_remaining
+    sig = sigma if sigma is not None else SIGMA
+    return s - inventory * g * sig**2 * time_remaining
 
 
-def optimal_spread(time_remaining, gamma=None):
+def optimal_spread(time_remaining, gamma=None, sigma=None):
     """
     Calculate the theoretically optimal bid/ask spread.
     Spread widens with volatility, risk averseness and time remaining in session.
@@ -26,21 +27,22 @@ def optimal_spread(time_remaining, gamma=None):
     ## depends on time_remaining, not inventory.
     """
     g = gamma if gamma is not None else GAMMA
-    inventory_risk_component = g * SIGMA**2 * time_remaining
+    sig = sigma if sigma is not None else SIGMA
+    inventory_risk_component = g * sig**2 * time_remaining
     execution_risk_component = (2 / g) * np.log(1 + g / KAPPA)
     
     return inventory_risk_component + execution_risk_component
 
 
 ## Returns the final bid and ask quotes.
-def get_quotes(S, inventory, time_remaining, gamma=None):
+def get_quotes(S, inventory, time_remaining, gamma=None, sigma=None):
     """
     Calculate final bid and ask quotes.
     Centred on reservation price, not mid price.
     ## Notes: https://www.notion.so/bunchcapital/AVELLANEDA-STOIKOV-31aa8bd6cafd80289780fd97f61dab9d?source=copy_link#31ba8bd6cafd80588e8edc6b1bd9ce94 for more details.
     """
-    r = reservation_price(S, inventory, time_remaining, gamma=gamma)
-    spread = optimal_spread(time_remaining, gamma=gamma)
+    r = reservation_price(S, inventory, time_remaining, gamma=gamma, sigma=sigma)
+    spread = optimal_spread(time_remaining, gamma=gamma, sigma=sigma)
     
     bid = r - spread / 2
     ask = r + spread / 2

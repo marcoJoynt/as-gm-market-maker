@@ -50,13 +50,13 @@ def simulate_orders(bid, ask, S, V, inventory, cash, regime, informed_prob_toxic
         # probability of someone hitting our bid (they're selling to us)
         prob_bid_hit = A * DT * np.exp(-KAPPA * (S - bid))
 
-    # ask hit → we sell to them → inventory decreases, cash increases
+        # ask hit → we sell to them → inventory decreases, cash increases
         if np.random.uniform() < prob_ask_hit:
             inventory -= TRADE_SIZE
             cash += ask * TRADE_SIZE
             sell = True
 
-    # bid hit → we buy from them → inventory increases, cash decreases
+        # bid hit → we buy from them → inventory increases, cash decreases
         if np.random.uniform() < prob_bid_hit:
             inventory += TRADE_SIZE
             cash -= bid * TRADE_SIZE
