@@ -95,4 +95,9 @@ def run_simulation(
 
 if __name__ == "__main__":
     df = run_simulation()
+    # steps_per_minute = int(N_STEPS / (T * 60 * 6.5))
+    # returns = df["pnl"].iloc[::steps_per_minute].diff().dropna()
+    # print(df["pnl"])
+    # print(df["trade_pnl"])
+    # print(returns)
     plot_simulation(df)

@@ -7,7 +7,7 @@ import seaborn as sns
 import streamlit as st
 
 # Simulation lives in main.py (single source of truth); we pass sidebar params into
-# run_simulation() and only pull N_STEPS from config for metrics (e.g. Sharpe).
+# run_simulation(); config is used inside main for any param not overridden.
 sns.set_theme(
     style="dark",
     rc={
@@ -109,20 +109,27 @@ with st.sidebar:
     run = st.button("▶  Run Simulation")
 
 # ── Summary metrics ───────────────────────────────────────────────────────────
-# Uses N_STEPS from config for Sharpe scaling; df comes from main.run_simulation() and
-# includes trade_pnl (spread capture per trade, logged in main).
+# df from main.run_simulation() includes trade_pnl. Spread Capture Ratio = mean/std of
+# per-trade spread capture (avoids calling it Sharpe and comparison to strategy Sharpes).
 def compute_metrics(df):
-    pnl_returns     = df["pnl"].diff().dropna()
-    sharpe          = (pnl_returns.mean() / pnl_returns.std() * np.sqrt(N_STEPS)
-                       if pnl_returns.std() > 0 else 0)
-    total_trades    = ((df["spread"] > 0) & (df["inventory"].diff() != 0)).sum()
-    informed_pct    = df["informed"].mean() * 100
-    toxic_pct       = (df["regime"] == "toxic").mean() * 100
-    final_pnl       = df["pnl"].iloc[-1]
-    max_inventory   = df["inventory"].abs().max()
+    # (Testing df["trade_pnl"] since df["pnl"]is cumulative and not counting per trade) 
+    # pnl_returns     = df["pnl"].diff().dropna()
+    # Per-trade edge ratio (mean / std of spread capture on filled trades).
+    # Not a traditional annualised Sharpe — annualisation is omitted because
+    # trade_pnl is always positive by construction (ask - S or S - bid),
+    # making sqrt(n) scaling misleading. This measures consistency of spread
+    # capture, not risk-adjusted returns in the conventional sense.
+    trade_returns                 = df[df["trade_pnl"] != 0]["trade_pnl"]
+    spread_capture_ratio          = (trade_returns.mean() / trade_returns.std() # * np.sqrt(len(trade_returns)) - Dropping annualisation for now
+                                       if trade_returns.std() > 0 else 0)
+    total_trades                  = ((df["spread"] > 0) & (df["inventory"].diff() != 0)).sum()
+    informed_pct                  = df["informed"].mean() * 100
+    toxic_pct                     = (df["regime"] == "toxic").mean() * 100
+    final_pnl                     = df["pnl"].iloc[-1]
+    max_inventory                 = df["inventory"].abs().max()
     return {
         "Final P&L":        (final_pnl,    f"{final_pnl:+.2f}"),
-        "Sharpe":           (sharpe,        f"{sharpe:.2f}"),
+        "Spread Capture Ratio":           (spread_capture_ratio,        f"{spread_capture_ratio:.2f}"),
         "Informed flow":    (0,             f"{informed_pct:.1f}%"),
         "Time in toxic":    (0,             f"{toxic_pct:.1f}%"),
         "Max |inventory|":  (0,             f"{max_inventory:.0f}"),
@@ -288,8 +295,9 @@ if run:
         val, display = metrics[labels[i]]
         css_class = "positive" if (labels[i] == "Final P&L" and val > 0) else \
                     "negative" if (labels[i] == "Final P&L" and val < 0) else ""
+        tooltip = ' title="Mean / std of per-trade spread capture."' if labels[i] == "Spread Capture Ratio" else ""
         col.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card"{tooltip}>
             <div class="metric-label">{labels[i]}</div>
             <div class="metric-value {css_class}">{display}</div>
         </div>
